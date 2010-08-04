@@ -76,13 +76,13 @@ class Work_file
     puts @@text_tem
   end
 
-  def write_file
-    file = ''
-    if File.exist?("teste.html") == true
+  def write_file    
+    if File.exist?("teste.html")
       file = File.open("teste.html","r+")
       file.write @@text_tem
+      file.close
     else
-      file = File.new("teste.html","r")
+      file = File.new("teste.html","a+")
       file.write @@text_tem
       file.close
     end
