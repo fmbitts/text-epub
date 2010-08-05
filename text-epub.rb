@@ -52,9 +52,14 @@ class Work_file
   def to_html
     m = 0
     size = 0
+    num_line = 0
     @@text.each do |line|
       size == line.length
       if size < @@short_line && @@r2.match(line)
+        puts num_line
+        write_file("temp#{num_line}.html")
+        num_line = num_line + 1
+        @@text_tem = ''
         @@text_tem << "<h2>"
         @@text_tem << line
         @@text_tem << "</h2\n>"
@@ -76,13 +81,13 @@ class Work_file
     puts @@text_tem
   end
 
-  def write_file    
-    if File.exist?("teste.html")
-      file = File.open("teste.html","r+")
+  def write_file(file)    
+    if File.exist?(file)
+      file = File.open(file,"r+")
       file.write @@text_tem
       file.close
     else
-      file = File.new("teste.html","a+")
+      file = File.new(file,"a+")
       file.write @@text_tem
       file.close
     end
@@ -97,4 +102,3 @@ texto1 = Work_file.new
 texto1.open_to_str('teste.txt') 
 texto1.statistic
 texto1.to_html
-texto1.write_file
