@@ -1,15 +1,20 @@
 R1 = Regexp.new('\.$')
-R2 = Regexp.new('^Capitolo [1-9]?[0-9]\:$') 
+R2 = Regexp.new('^Capitolo [1-9]?[0-9]\:$')          
 
 class Work_file    
   @@text=''
-  @@text_tem=''  
+  @@text_tem= ''
   @@long_line = 0
   @@short_line = 1200
   @@short_line_dot = 1220
   @@long_line_dot = 0
+  @@name_book = ''
+  @@author_book = ''
+  @@isbn13 = '' #future thing to get the number and acess via http and get all de information from isbn servers
   
-  
+  def random
+    rand(10000000)
+  end
   def statistic     #checks the longest and the shortest line with and without dot. And with this information guess what is a paragraph
     num_char = 0
     num_lines = 0 
@@ -48,24 +53,48 @@ class Work_file
     end
   end    
   
-  def to_html  #Uses the string @text and puts the tag H2 for the chapters and normal tags for paragraphs.
+  def get_book_information
+        puts "Please insert the name of the book or document"
+    #    @@name_book = gets
+        @@name_book = "Harry Potter"
+        puts "Please insert the author of the book or document"
+    #    @@author_book = gets
+        @@author_book = "Joelmir Betting"
+        @@identifier_id = random  
+  end
+  
+  def to_html
     m = 0
     size = 0
     num_line = 0
+    @@text_tem << "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+    @@text_tem << "<head>\n "
+    @@text_tem << "  <title>Hello World: My First EPUB</title>\n "
+    @@text_tem << "  <link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"stylesheet.css\" />\n"
+    @@text_tem << "</head>\n"
+    @@text_tem << "<body>\n"
     @@text.each_line do |line|      
-      size = line.length
+      size == line.length
       if size < @@short_line && R2.match(line)
-        puts "File #{num_line} created" 
+        puts num_line
+        @@text_tem << "</body>\n"
+        @@text_tem << "</html>\n"
         write_file("temp/temp#{num_line}.html")
         num_line = num_line + 1
         @@text_tem = ''
+        @@text_tem << "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+        @@text_tem << "<head>\n "
+        @@text_tem << "  <title>Hello World: My First EPUB</title>\n "
+        @@text_tem << "  <link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"stylesheet.css\" />\n"
+        @@text_tem << "</head>\n"
+        @@text_tem << "<body>\n"
         @@text_tem << "<h2>"
         @@text_tem << line
-        @@text_tem << "</h2\n>"
+        @@text_tem << "</h2>\n"
       else
         if m == 0
            @@text_tem << "<p>"
-           m = 1
+           m =1
         end              
         if size < @@long_line && R1.match(line)
           @@text_tem << line
@@ -77,6 +106,12 @@ class Work_file
         end
       end
     end
+  end
+  
+ 
+
+  def create_content
+    
   end
 
   def write_file(file)    #just write the files
@@ -137,6 +172,8 @@ class Work_file
     end    
   end
   
+  # Those following methodos are to create the file toc.ncx
+  
   def create_ncx
     content = ''
     create_header_ncx(content) 
@@ -164,7 +201,7 @@ class Work_file
     content << "    <meta name=\"dtb:maxPageNumber\" content=\"0\"/>\n"
     content << "  </head>\n" 
     content << "  <docTitle>\n"
-    content << "     <text>Hello World: My First EPUB</text> \n"
+    content << "     <text>#{@@author_book}</text> \n"
     content << "  </docTitle>\n"   
   end                  
   
@@ -186,6 +223,8 @@ class Work_file
     content << "</ncx>\n"
   end
   
+  # Those following methodos are to creaate the file content.opf
+  
   def create_opf
     content = ''
     create_metadata_opf(content)
@@ -196,23 +235,23 @@ class Work_file
     file.close
   end
   
-  def create_spine_opf(content)
+  def create_spine_opf(content) 
     content << "<spine toc=\"ncx\">\n"
-  	content << "<itemref idref=\"cover\" linear=\"no\"/>\n"
-  	content << " <itemref idref=\"content\"/> </spine>\n"
-  	content << "<guide>" 
-  	content << "<reference href=\"title.html\" type=\"cover\" title=\"Cover\"/>\n"
-  	content << "</guide>\n" 
-  	content << "</package>\n"
-	end
-    
+    content << "<itemref idref=\"cover\" linear=\"no\"/>\n"
+    content << " <itemref idref=\"content\"/> </spine>\n"
+    content << "<guide>" 
+    content << "<reference href=\"title.html\" type=\"cover\" title=\"Cover\"/>\n"
+    content << "</guide>\n" 
+    content << "</package>\n"
+  end   
   
   def create_metadata_opf(content)
     content << "<?xml version='1.0' encoding='utf-8'?>\n " 
   	content << "<package xmlns=\"http://www.idpf.org/2007/opf\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" unique-identifier=\"bookid\" version=\"2.0\">" 
     content << "<metadata>\n"
-    content << "<dc:title>Hello World: My First EPUB</dc:title>\n "
-  	content << "<dc:creator>My Name</dc:creator> <dc:identifier id=\"bookid\">urn:uuid:0cc33cbd-94e2-49c1-909a-72ae16bc2658</dc:identifier>\ "
+    content << "<dc:title>#{@@name_book}</dc:title>\n "
+  	content << "<dc:creator>#{@@author_book}</dc:creator>\n" 
+  	content << "<dc:identifier id=\"bookid\">#{@@identifier_id}</dc:identifier>\ "
   	content << "<dc:language>en-US</dc:language> <meta name=\"cover\" content=\"cover-image\" /> \n"
   	content << "</metadata> \n"
   end 
@@ -227,15 +266,17 @@ class Work_file
   	content << "</manifest> \n"
   end
   
+  # The following method creates the title.html which is the title page for the epub.
+  
   def create_title_page
     content = ''
     content << "<html xmlns=\"http://www.w3.org/1999/xhtml\">"
     content << "  <head>\n"
-    content << "    <title>Hello World: My First EPUB</title>\n"
+    content << "    <title>#{@@name_book}</title>\n"
     content << "    <link type=\"text/css\" rel=\"stylesheet\" href=\"stylesheet.css\" />\n"
     content << "  </head>\n"
     content << "  <body>\n"
-    content << "    <h1>Hello World: My First EPUB</h1>\n"
+    content << "    <h1>#{@@name_book}</h1>\n"
     content << "    <div><img src=\"images/cover.png\" alt=\"Title page\"/></div>\n"
     content << "  </body>\n"
     content << "</html>\n"
@@ -243,6 +284,8 @@ class Work_file
     f.write content
     f.close
   end
+   
+  # The method create the css template for the epub.
   
   def create_book_css
     content = ''
@@ -257,20 +300,22 @@ class Work_file
     f.write content
     f.close    
   end
-   
+  
+  # the following method create de directory for the images and will cope images from a specific directory to the epub 
   def create_images_dic
     if !Dir.exist?("epub/OEBPS/images")
       Dir.mkdir('epub/OEBPS/images')
     end
   end
   
+  # the following method creates the epub file.
   def create_zip
     IO.popen("zip -0Xq my-book.epub epub/mimetype")
     IO.popen("zip -Xr9Dq my-book.epub epub/*") 
   
   end
      
-  
+  # the following method agreagates all the anterior methods to create the files do the create_zip method.
   def create_epub
     create_mimetype
     create_container
@@ -289,4 +334,4 @@ texto1 = Work_file.new
 texto1.open_to_str('Harry.txt') 
 texto1.statistic
 texto1.to_html
-texto1.create_epub
+#texto1.create_epub
