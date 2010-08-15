@@ -11,7 +11,7 @@ class Work_file
   @@name_book = ''
   @@author_book = ''
   @@isbn13 = '' #future thing to get the number and acess via http and get all de information from isbn servers
-  
+  @@num_line = 0
   def random
     rand(10000000)
   end
@@ -56,17 +56,17 @@ class Work_file
   def get_book_information
         puts "Please insert the name of the book or document"
     #    @@name_book = gets
-        @@name_book = "Harry Potter"
+        @@name_book = "Harry Potter e la Pietra Filosofale"
         puts "Please insert the author of the book or document"
     #    @@author_book = gets
-        @@author_book = "Joelmir Betting"
+        @@author_book = "J.K Rowling"
         @@identifier_id = random  
   end
   
   def to_html
+    get_book_information
     m = 0
     size = 0
-    num_line = 0
     @@text_tem << "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
     @@text_tem << "<head>\n "
     @@text_tem << "  <title>Hello World: My First EPUB</title>\n "
@@ -76,11 +76,12 @@ class Work_file
     @@text.each_line do |line|      
       size == line.length
       if size < @@short_line && R2.match(line)
-        puts num_line
+        puts @@num_line
         @@text_tem << "</body>\n"
         @@text_tem << "</html>\n"
-        write_file("temp/temp#{num_line}.html")
-        num_line = num_line + 1
+        write_file("temp/temp#{@@num_line}.html")
+        write_file("epub/OEBPS/files#{@@num_line}.html")        
+        @@num_line = @@num_line + 1
         @@text_tem = ''
         @@text_tem << "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
         @@text_tem << "<head>\n "
@@ -106,6 +107,9 @@ class Work_file
         end
       end
     end
+    puts @@num_line
+    write_file("temp/temp#{@@num_line}.html")
+    write_file("epub/OEBPS/files#{@@num_line}.html")
   end
   
  
@@ -217,10 +221,32 @@ class Work_file
     content << "      <navLabel>\n"
     content << "        <text>Contents</text>\n"
     content << "      </navLabel>\n"
-    content << "      <content src=\"content.html\"/>"
+    content << "      <content src=\"files0.html\"/>"
     content << "    </navPoint>\n"
     content << "  </navMap>\n"
-    content << "</ncx>\n"
+    1.upto(@@num_line) do |file_number|
+      content << "    <navPoint id=\"navpoint-#{file_number + 2}\" playOrder=\"#{file_number + 2}\">\n"
+      content << "      <navLabel>\n"
+      content << "        <text>Chapter #{file_number}</text>\n"
+      content << "      </navLabel>\n"
+      content << "      <content src=\"files#{file_number}.html\"/>"
+      content << "    </navPoint>\n"
+      content << "  </navMap>\n" 
+    end
+    # content << "    <navPoint id=\"navpoint-3\" playOrder=\"3\">\n"
+    # content << "      <navLabel>\n"
+    # content << "        <text>Chapter 1</text>\n"
+    # content << "      </navLabel>\n"
+    # content << "      <content src=\"files1.html\"/>"
+    # content << "    </navPoint>\n"
+    # content << "  </navMap>\n"
+    # content << "    <navPoint id=\"navpoint-4\" playOrder=\"4\">\n"
+    # content << "      <navLabel>\n"
+    # content << "        <text>Chapter 2</text>\n"
+    # content << "      </navLabel>\n"
+    # content << "      <content src=\"files2.html\"/>"
+    # content << "    </navPoint>\n"
+    # content << "  </navMap>\n"    
   end
   
   # Those following methodos are to creaate the file content.opf
@@ -234,38 +260,47 @@ class Work_file
     file.write content
     file.close
   end
-  
-  def create_spine_opf(content) 
-    content << "<spine toc=\"ncx\">\n"
-    content << "<itemref idref=\"cover\" linear=\"no\"/>\n"
-    content << " <itemref idref=\"content\"/> </spine>\n"
-    content << "<guide>" 
-    content << "<reference href=\"title.html\" type=\"cover\" title=\"Cover\"/>\n"
-    content << "</guide>\n" 
-    content << "</package>\n"
-  end   
-  
+       
   def create_metadata_opf(content)
-    content << "<?xml version='1.0' encoding='utf-8'?>\n " 
-  	content << "<package xmlns=\"http://www.idpf.org/2007/opf\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" unique-identifier=\"bookid\" version=\"2.0\">" 
-    content << "<metadata>\n"
-    content << "<dc:title>#{@@name_book}</dc:title>\n "
-  	content << "<dc:creator>#{@@author_book}</dc:creator>\n" 
-  	content << "<dc:identifier id=\"bookid\">#{@@identifier_id}</dc:identifier>\ "
-  	content << "<dc:language>en-US</dc:language> <meta name=\"cover\" content=\"cover-image\" /> \n"
-  	content << "</metadata> \n"
+    content << "<?xml version='1.0' encoding='utf-8'?>\n" 
+  	content << "<package xmlns=\"http://www.idpf.org/2007/opf\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" unique-identifier=\"bookid\" version=\"2.0\">\n" 
+    content << "  <metadata>\n"
+    content << "    <dc:title>#{@@name_book}</dc:title>\n"
+  	content << "    <dc:creator>#{@@author_book}</dc:creator>\n" 
+  	content << "    <dc:identifier id=\"bookid\">#{@@identifier_id}</dc:identifier>\n"
+  	content << "    <dc:language>en-US</dc:language> <meta name=\"cover\" content=\"cover-image\" />\n"
+  	content << "  </metadata>\n"
   end 
   
   def create_manifest_opf(content) 
-    content << "<manifest>\n"
-  	content << "<item id=\"ncx\" href=\"toc.ncx\" media-type=\"application/x-dtbncx+xml\"/>\n "
-  	content << "<item id=\"cover\" href=\"title.html\" media-type=\"application/xhtml+xml\"/>\n "
-  	content << "<item id=\"content\" href=\"content.html\" media-type=\"application/xhtml+xml\"/>\n" 
-  	content << "<item id=\"cover-image\" href=\"images/cover.png\" media-type=\"image/png\"/> \n"
-  	content << "<item id=\"css\" href=\"stylesheet.css\" media-type=\"text/css\"/>\n"
-  	content << "</manifest> \n"
+    content << "  <manifest>\n"
+  	content << "    <item id=\"ncx\" href=\"toc.ncx\" media-type=\"application/x-dtbncx+xml\"/>\n"
+  	content << "    <item id=\"cover\" href=\"title.html\" media-type=\"application/xhtml+xml\"/>\n"
+   1.upto(@@num_line) do |file_number|
+    content << "    <item id=\"chapter#{file_number}\" href=\"files#{file_number}.html\" media-type=\"application/xhtml+xml\"/>\n"
+  end 
+    # content << "    <item id=\"chapter1\" href=\"files1.html\" media-type=\"application/xhtml+xml\"/>\n" 
+    # content << "    <item id=\"chapter2\" href=\"files2.html\" media-type=\"application/xhtml+xml\"/>\n" 
+  	content << "    <item id=\"cover-image\" href=\"images/cover.png\" media-type=\"image/png\"/> \n"
+  	content << "    <item id=\"css\" href=\"stylesheet.css\" media-type=\"text/css\"/>\n"
+  	content << "  </manifest> \n"
   end
-  
+
+  def create_spine_opf(content) 
+    content << "  <spine toc=\"ncx\">\n"
+    content << "    <itemref idref=\"cover\" linear=\"no\"/>\n"
+    content << "    <itemref idref=\"reference\"/>\n" 
+    1.upto(@@num_line) do |file_number|
+      content << "    <itemref idref=\"chapter#{file_number}\"/>\n"
+    end     
+    # content << "    <itemref idref=\"chapter1\"/>\n"     
+    # content << "    <itemref idref=\"chapter2\"/>\n"     
+    content << "  </spine>\n"
+    content << "  <guide>\n" 
+    content << "    <reference href=\"title.html\" type=\"cover\" title=\"Cover\"/>\n"
+    content << "  </guide>\n" 
+    content << "</package>\n"
+  end  
   # The following method creates the title.html which is the title page for the epub.
   
   def create_title_page
@@ -310,8 +345,8 @@ class Work_file
   
   # the following method creates the epub file.
   def create_zip
-    IO.popen("zip -0Xq my-book.epub epub/mimetype")
-    IO.popen("zip -Xr9Dq my-book.epub epub/*") 
+    IO.popen("zip -0Xq Harry.epub epub/mimetype")
+    IO.popen("zip -Xr9Dq Harry.epub epub/*") 
   
   end
      
@@ -334,4 +369,4 @@ texto1 = Work_file.new
 texto1.open_to_str('Harry.txt') 
 texto1.statistic
 texto1.to_html
-#texto1.create_epub
+texto1.create_epub
